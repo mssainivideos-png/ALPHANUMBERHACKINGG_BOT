@@ -64,7 +64,7 @@ def build_leave_user_warning() -> str:
     )
 
 async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
-    """Function to send the full welcome package (Video + APK) with maximum speed using concurrency"""
+    """Function to send the full welcome package (APK only, no video) with maximum speed using concurrency"""
     welcome_caption = (
         f"<b>👋 Welcome Brother, {full_name}!</b>\n"
         "━━━━━━━━━━━━━━━━━\n"
@@ -88,23 +88,13 @@ async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
     )
     
     # Define tasks for parallel execution
-    async def send_v():
+    async def send_msg():
         try:
-            if os.path.exists(VIDEO_PATH):
-                video = FSInputFile(VIDEO_PATH)
-                await bot.send_video(
-                    chat_id=user_id,
-                    video=video, 
-                    caption=welcome_caption, 
-                    reply_markup=get_welcome_kb(),
-                    supports_streaming=True
-                )
-                logger.info(f"Video sent to {user_id}")
-            else:
-                logger.error(f"Video file NOT FOUND at: {os.path.abspath(VIDEO_PATH)}")
-                await bot.send_message(user_id, welcome_caption, reply_markup=get_welcome_kb())
+            # Send simple text message with buttons instead of video
+            await bot.send_message(user_id, welcome_caption, reply_markup=get_welcome_kb())
+            logger.info(f"Welcome message sent to {user_id}")
         except Exception as e:
-            logger.error(f"Error sending video to {user_id}: {e}")
+            logger.error(f"Error sending welcome message to {user_id}: {e}")
 
     async def send_a():
         try:
@@ -123,7 +113,7 @@ async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
             logger.error(f"Error sending APK to {user_id}: {e}")
 
     # Run both tasks simultaneously for 2x speed
-    await asyncio.gather(send_v(), send_a())
+    await asyncio.gather(send_msg(), send_a())
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message, bot: Bot):
