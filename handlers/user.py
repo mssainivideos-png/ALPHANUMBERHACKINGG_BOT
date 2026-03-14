@@ -12,10 +12,11 @@ router = Router()
 db = Database(DATABASE_NAME)
 logger = logging.getLogger(__name__)
 
-# File paths (Relative to project root for compatibility)
-VIDEO_PATH = "video_2026 (1) (1).mp4"
+# File paths (Absolute to avoid cwd issues)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+VIDEO_PATH = os.path.join(BASE_DIR, "video_2026 (1) (1).mp4")
 APK_CANDIDATE_PATHS = [
-    "𝗠𝗔𝗚𝗜𝗖 𝗧𝗢𝗢𝗟 𝗣𝗥𝗢.apk",
+    os.path.join(BASE_DIR, "𝗠𝗔𝗚𝗜𝗖 𝗧𝗢𝗢𝗟 𝗣𝗥𝗢.apk"),
 ]
 
 # In-memory file ID cache to speed up media sending
