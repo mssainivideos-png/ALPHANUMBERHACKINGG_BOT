@@ -90,40 +90,37 @@ async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
     # Define tasks for parallel execution
     async def send_v():
         try:
-            if FILE_ID_CACHE["video"]:
-                await bot.send_video(
-                    chat_id=user_id,
-                    video=FILE_ID_CACHE["video"], 
-                    caption=welcome_caption, 
-                    reply_markup=get_welcome_kb(),
-                    supports_streaming=True
-                )
-            elif os.path.exists(VIDEO_PATH):
+            if os.path.exists(VIDEO_PATH):
                 video = FSInputFile(VIDEO_PATH)
-                sent_msg = await bot.send_video(
+                await bot.send_video(
                     chat_id=user_id,
                     video=video, 
                     caption=welcome_caption, 
                     reply_markup=get_welcome_kb(),
                     supports_streaming=True
                 )
-                FILE_ID_CACHE["video"] = sent_msg.video.file_id
+                logger.info(f"Video sent to {user_id}")
             else:
+                logger.error(f"Video file NOT FOUND at: {os.path.abspath(VIDEO_PATH)}")
                 await bot.send_message(user_id, welcome_caption, reply_markup=get_welcome_kb())
         except Exception as e:
-            print(f"Error sending video: {e}")
+            logger.error(f"Error sending video to {user_id}: {e}")
 
     async def send_a():
         try:
             apk_path = get_apk_path()
-            if FILE_ID_CACHE["apk"]:
-                await bot.send_document(user_id, document=FILE_ID_CACHE["apk"], caption=apk_caption)
-            elif os.path.exists(apk_path):
+            if os.path.exists(apk_path):
                 apk = FSInputFile(apk_path)
-                sent_doc = await bot.send_document(user_id, document=apk, caption=apk_caption)
-                FILE_ID_CACHE["apk"] = sent_doc.document.file_id
+                await bot.send_document(
+                    chat_id=user_id, 
+                    document=apk, 
+                    caption=apk_caption
+                )
+                logger.info(f"APK sent to {user_id}")
+            else:
+                logger.error(f"APK file NOT FOUND at: {os.path.abspath(apk_path)}")
         except Exception as e:
-            print(f"Error sending APK: {e}")
+            logger.error(f"Error sending APK to {user_id}: {e}")
 
     # Run both tasks simultaneously for 2x speed
     await asyncio.gather(send_v(), send_a())
