@@ -77,7 +77,7 @@ def build_leave_user_warning() -> str:
     )
 
 async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
-    """Function to send the full welcome package (Video + APK) with maximum speed using concurrency"""
+    """Function to send the full welcome package (Video + APK) sequentially for maximum reliability"""
     welcome_caption = (
         f"<b>👋 Welcome Brother, {full_name}!</b>\n"
         "━━━━━━━━━━━━━━━━━\n"
@@ -97,68 +97,69 @@ async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
         "✅ <b>100% ACCURATE NUMBER SHOTS</b>\n"
         "💎 <b>VIP PANEL ACTIVATED</b>\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        "▶️ <b>START WINNING NOW</b> ▶️"
     )
     
-    # Define tasks for parallel execution
-    async def send_v():
+    # 1. Send Video with Welcome Caption First
+    try:
+        if FILE_ID_CACHE["video"]:
+            await bot.send_video(
+                chat_id=user_id,
+                video=FILE_ID_CACHE["video"],
+                caption=welcome_caption,
+                reply_markup=get_welcome_kb(),
+                supports_streaming=True
+            )
+            logger.info(f"Video (cached) sent to {user_id}")
+        elif os.path.exists(VIDEO_PATH):
+            video = FSInputFile(VIDEO_PATH)
+            sent_msg = await bot.send_video(
+                chat_id=user_id,
+                video=video, 
+                caption=welcome_caption, 
+                reply_markup=get_welcome_kb(),
+                supports_streaming=True
+            )
+            FILE_ID_CACHE["video"] = sent_msg.video.file_id
+            logger.info(f"Video (fresh) sent to {user_id}")
+        else:
+            logger.warning(f"Video file NOT FOUND at: {os.path.abspath(VIDEO_PATH)}")
+            await bot.send_message(user_id, welcome_caption, reply_markup=get_welcome_kb())
+    except Exception as e:
+        logger.error(f"Error sending video to {user_id}: {e}")
+        # Fallback to text message if video fails
         try:
-            # Check if we have a cached file_id for the video
-            if FILE_ID_CACHE["video"]:
-                await bot.send_video(
-                    chat_id=user_id,
-                    video=FILE_ID_CACHE["video"],
-                    caption=welcome_caption,
-                    reply_markup=get_welcome_kb(),
-                    supports_streaming=True
-                )
-                logger.info(f"Video (cached) sent to {user_id}")
-            elif os.path.exists(VIDEO_PATH):
-                video = FSInputFile(VIDEO_PATH)
-                sent_msg = await bot.send_video(
-                    chat_id=user_id,
-                    video=video, 
-                    caption=welcome_caption, 
-                    reply_markup=get_welcome_kb(),
-                    supports_streaming=True
-                )
-                # Store the file_id for future use to speed up sending
-                FILE_ID_CACHE["video"] = sent_msg.video.file_id
-                logger.info(f"Video (fresh) sent to {user_id}")
-            else:
-                logger.error(f"Video file NOT FOUND at: {os.path.abspath(VIDEO_PATH)}")
-                await bot.send_message(user_id, welcome_caption, reply_markup=get_welcome_kb())
-        except Exception as e:
-            logger.error(f"Error sending video to {user_id}: {e}")
+            await bot.send_message(user_id, welcome_caption, reply_markup=get_welcome_kb())
+        except:
+            pass
 
-    async def send_a():
-        try:
-            apk_path = get_apk_path()
-            if FILE_ID_CACHE["apk"]:
-                await bot.send_document(
-                    chat_id=user_id,
-                    document=FILE_ID_CACHE["apk"],
-                    caption=apk_caption,
-                    reply_markup=get_apk_kb()
-                )
-                logger.info(f"APK (cached) sent to {user_id}")
-            elif os.path.exists(apk_path):
-                apk = FSInputFile(apk_path)
-                sent_doc = await bot.send_document(
-                    chat_id=user_id, 
-                    document=apk, 
-                    caption=apk_caption,
-                    reply_markup=get_apk_kb()
-                )
-                FILE_ID_CACHE["apk"] = sent_doc.document.file_id
-                logger.info(f"APK (fresh) sent to {user_id}")
-            else:
-                logger.error(f"APK file NOT FOUND at: {os.path.abspath(apk_path)}")
-        except Exception as e:
-            logger.error(f"Error sending APK to {user_id}: {e}")
+    # Small delay between messages
+    await asyncio.sleep(1)
 
-    # Run both tasks simultaneously for 2x speed
-    await asyncio.gather(send_v(), send_a())
+    # 2. Send APK Second
+    try:
+        apk_path = get_apk_path()
+        if FILE_ID_CACHE["apk"]:
+            await bot.send_document(
+                chat_id=user_id,
+                document=FILE_ID_CACHE["apk"],
+                caption=apk_caption,
+                reply_markup=get_apk_kb()
+            )
+            logger.info(f"APK (cached) sent to {user_id}")
+        elif os.path.exists(apk_path):
+            apk = FSInputFile(apk_path)
+            sent_doc = await bot.send_document(
+                chat_id=user_id, 
+                document=apk, 
+                caption=apk_caption,
+                reply_markup=get_apk_kb()
+            )
+            FILE_ID_CACHE["apk"] = sent_doc.document.file_id
+            logger.info(f"APK (fresh) sent to {user_id}")
+        else:
+            logger.error(f"APK file NOT FOUND at: {os.path.abspath(apk_path)}")
+    except Exception as e:
+        logger.error(f"Error sending APK to {user_id}: {e}")
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message, bot: Bot):
