@@ -160,37 +160,47 @@ async def user_to_group(message: Message, bot: Bot):
         logger.error(f"Error forwarding to group: {e}")
         await message.answer("❌ <b>Sorry, there was an error sending your message. Please try again later.</b>")
 
-@router.message(F.chat.id == SUPPORT_GROUP_ID, F.reply_to_message)
+@router.message(F.chat.id == SUPPORT_GROUP_ID)
 async def group_reply_to_user(message: Message, bot: Bot):
-    """Forward any reply from group members to the user anonymously"""
-    original_msg = message.reply_to_message
-    user_id = await resolve_support_user_id(message)
+    """Admin/Support replies in the support group"""
+    
+    # 1. Reply to a forwarded message from a user
+    if message.reply_to_message and message.reply_to_message.forward_from:
+        target_user_id = message.reply_to_message.forward_from.id
+    
+    # 2. Reply to a message sent by the bot (which might contain hidden ID or be mapped)
+    elif message.reply_to_message and message.reply_to_message.from_user.id == bot.id:
+        target_user_id = await resolve_support_user_id(message)
+        
+        # Fallback to pattern matching if resolve fails
+        if not target_user_id:
+            match = re.search(r"User ID: (\d+)", message.reply_to_message.text or "")
+            if match:
+                 target_user_id = int(match.group(1))
+    else:
+        # If not a reply, ignore
+        return
 
-    if user_id:
+    if target_user_id:
         try:
-            logger.info(
-                "Resolved support reply target user_id=%s from group_message_id=%s reply_to=%s",
-                user_id,
-                getattr(message, "message_id", None),
-                getattr(original_msg, "message_id", None),
-            )
-            reply_header = "<b>💬 Support Team Reply:</b>\n\n"
+            # Send the reply to the user
+            reply_header = "👨‍💻 <b>Support Reply:</b>\n\n"
             sent_to_user = False
-            
+
             if message.text:
-                await bot.send_message(user_id, f"{reply_header}{message.text}")
+                await bot.send_message(target_user_id, f"{reply_header}{message.text}")
                 sent_to_user = True
             elif message.photo:
-                await bot.send_photo(user_id, message.photo[-1].file_id, caption=f"{reply_header}{message.caption or ''}")
+                await bot.send_photo(target_user_id, message.photo[-1].file_id, caption=f"{reply_header}{message.caption or ''}")
                 sent_to_user = True
             elif message.video:
-                await bot.send_video(user_id, message.video.file_id, caption=f"{reply_header}{message.caption or ''}")
+                await bot.send_video(target_user_id, message.video.file_id, caption=f"{reply_header}{message.caption or ''}")
                 sent_to_user = True
             elif message.document:
-                await bot.send_document(user_id, message.document.file_id, caption=f"{reply_header}{message.caption or ''}")
+                await bot.send_document(target_user_id, message.document.file_id, caption=f"{reply_header}{message.caption or ''}")
                 sent_to_user = True
             elif message.voice:
-                await bot.send_voice(user_id, message.voice.file_id, caption=f"{reply_header}{message.caption or ''}")
+                await bot.send_voice(target_user_id, message.voice.file_id, caption=f"{reply_header}{message.caption or ''}")
                 sent_to_user = True
             else:
                 await message.reply("❌ <b>This reply type is not supported.</b>")
@@ -198,21 +208,12 @@ async def group_reply_to_user(message: Message, bot: Bot):
 
             if sent_to_user:
                 if getattr(message, "message_id", None) is not None:
-                    await db.add_support_message_map(message.message_id, user_id)
+                    await db.add_support_message_map(message.message_id, target_user_id)
                 status_message = await message.reply("✅ <b>Reply sent to user</b>")
                 schedule_message_deletion(status_message, delay_seconds=3)
-                if getattr(status_message, "message_id", None) is not None:
-                    await db.add_support_message_map(status_message.message_id, user_id)
+                
         except Exception as e:
-            logger.error(f"Error sending reply to user {user_id}: {e}")
-            await message.reply(f"❌ <b>Error sending reply:</b> {e}")
+            logger.error(f"Error sending reply to user {target_user_id}: {e}")
+            await message.reply(f"❌ <b>Failed to send reply:</b> {e}")
     else:
-        logger.warning(
-            "Could not find User ID in support reply context. group_message_id=%s reply_to=%s has_external_reply=%s",
-            getattr(message, "message_id", None),
-            getattr(original_msg, "message_id", None),
-            bool(getattr(message, "external_reply", None)),
-        )
-        await message.reply(
-            "❌ <b>Could not identify the user for this reply.</b> Reply to the bot support message or an earlier mapped support reply."
-        )
+        await message.reply("❌ <b>Could not identify the user for this reply.</b> Please reply to a forwarded message or a valid support ticket.")
