@@ -13,10 +13,9 @@ db = Database(DATABASE_NAME)
 logger = logging.getLogger(__name__)
 
 # File paths (Relative to project root for compatibility)
-VIDEO_PATH = "IMG_2518.MP4"
+VIDEO_PATH = "video_2026.mp4"
 APK_CANDIDATE_PATHS = [
-    "𝗩𝗜𝗣 𝗣𝗔𝗡𝗡𝗘𝗟_1.0.apk",
-    "VIP_PANEL_V1.apk",
+    "𝗠𝗔𝗚𝗜𝗖 𝗧𝗢𝗢𝗟 𝗣𝗥𝗢.apk",
 ]
 
 # In-memory file ID cache to speed up media sending
@@ -35,11 +34,11 @@ def get_welcome_kb():
     builder = InlineKeyboardBuilder()
     builder.row(types.InlineKeyboardButton(
         text="TASHAN OFFICIAL LINK 🚀", 
-        url="https://www.tswgg.co/#/register?invitationCode=377675460579"
+        url="https://www.rajastake.com/#/register?invitationCode=671335540634"
     ))
     builder.row(
-        types.InlineKeyboardButton(text="⚡ Number Prediction", url="https://t.me/+z-VeYV2I6MoxNDhl"),
-        types.InlineKeyboardButton(text="⚡ Loss recover DM ME", url="https://t.me/m/vPGp71AxOTUx")
+        types.InlineKeyboardButton(text="⚡ Number Prediction", url="https://t.me/+ERspzgqr5cQ5NmRl"),
+        types.InlineKeyboardButton(text="⚡ Loss recover DM ME", url="https://t.me/m/wmqbc6OcNjBh")
     )
     return builder.as_markup()
 
@@ -51,7 +50,7 @@ def build_leave_group_warning(user) -> str:
         f"👤 <b>User:</b> {user.full_name}\n"
         f"🆔 <b>User ID:</b> <code>{user.id}</code>\n"
         f"{username_line}"
-        "━━━━━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━\n"
         "⚠️ <b>Isne channel leave kar diya hai!</b>"
     )
 
@@ -68,23 +67,23 @@ async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
     """Function to send the full welcome package (Video + APK) with maximum speed using concurrency"""
     welcome_caption = (
         f"<b>👋 Welcome Brother, {full_name}!</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━\n"
         "🚀 <b>PREMIUM HACK UPDATE</b> 🔥\n"
         "🆕 <b>LATEST VERSION RELEASED</b> ✅\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━\n"
         "👀 <b>PROOF DEKH LO SAB LOG</b> 😱🔥\n"
         "💯 <b>REAL + WORKING PROOF</b> ✅\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━\n"
         "⤵️ <b>QUICK ACTIONS BELOW</b> 👇"
     )
 
     apk_caption = (
         "<b>📥 CLICK AND INSTALL NOW</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━\n"
         "⚠️ <b>IMPORTANT:</b> Pahle Video Dekho Uske Baad Use Karo!\n"
         "✅ <b>100% ACCURATE NUMBER SHOTS</b>\n"
         "💎 <b>VIP PANEL ACTIVATED</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━━\n"
         "▶️ <b>START WINNING NOW</b> ▶️"
     )
     
