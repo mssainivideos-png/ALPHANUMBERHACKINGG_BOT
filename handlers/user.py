@@ -6,21 +6,21 @@ from aiogram.filters import CommandStart, Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import FSInputFile, ChatJoinRequest, ChatMemberUpdated
 from database import Database
-from config import DATABASE_NAME, CHANNEL_ID, SUPPORT_GROUP_ID
+from config import DATABASE_NAME, CHANNEL_ID, SUPPORT_GROUP_ID, WELCOME_VIDEO_FILE_ID
 
 router = Router()
 db = Database(DATABASE_NAME)
 logger = logging.getLogger(__name__)
 
 # File paths (Relative to project root for compatibility)
-VIDEO_PATH = "welcome_video.mp4"
+VIDEO_PATH = "video_2026 (1) (1).mp4"
 APK_CANDIDATE_PATHS = [
     "𝗠𝗔𝗚𝗜𝗖 𝗧𝗢𝗢𝗟 𝗣𝗥𝗢.apk",
 ]
 
 # In-memory file ID cache to speed up media sending
 FILE_ID_CACHE = {
-    "video": None,
+    "video": WELCOME_VIDEO_FILE_ID,
     "apk": None
 }
 

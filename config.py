@@ -12,6 +12,9 @@ else:
 
 DATABASE_NAME = os.getenv("DATABASE_NAME", "bot_database.db")
 
+# Optional file_id to force welcome video without local file
+WELCOME_VIDEO_FILE_ID = os.getenv("WELCOME_VIDEO_FILE_ID", "").strip() or None
+
 # Support Group ID
 SUPPORT_GROUP_ID = int(os.getenv("SUPPORT_GROUP_ID", "-1003557182463")) # Updated from .env or default
 

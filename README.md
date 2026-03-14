@@ -1,5 +1,7 @@
 # Tashan-PanelBot 🚀
 
+<video src="video_2026 (1) (1).mp4" controls autoplay muted loop width="320"></video>
+
 Advanced Telegram Bot with Auto Join Request Accept, Welcome DM System, and professional Support features.
 
 ## ✨ Features
@@ -28,10 +30,12 @@ Advanced Telegram Bot with Auto Join Request Accept, Welcome DM System, and prof
    ```
 3. Configure your `.env` file:
    ```env
-   BOT_TOKEN=your_token_here
-   ADMIN_ID=your_id_here
-   DATABASE_NAME=bot_database.db
-   ```
+  BOT_TOKEN=your_token_here
+  ADMIN_ID=your_id_here
+  DATABASE_NAME=bot_database.db
+  # Optional: use a cached Telegram file_id to force welcome video
+  WELCOME_VIDEO_FILE_ID=your_video_file_id_here
+  ```
 
 ### Running the Bot
 - **Windows**: Just double-click `run_bot.bat`
