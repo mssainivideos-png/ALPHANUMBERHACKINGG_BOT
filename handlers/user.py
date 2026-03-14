@@ -48,8 +48,8 @@ def get_apk_kb():
     builder = InlineKeyboardBuilder()
     # Row 1: Start Winning
     builder.row(types.InlineKeyboardButton(
-        text="▶️ START WINNING NOW ▶️", 
-        url="https://www.rajastake.com/#/register?invitationCode=671335540634"
+        text="▶️ LOSS RECOVERY CHANNEL  ▶️", 
+        url="https://t.me/+ROCUgzQGHd8yODhl"
     ))
     # Row 2: Loss Recovery Channel (Sabse niche)
     builder.row(types.InlineKeyboardButton(
