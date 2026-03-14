@@ -32,15 +32,15 @@ def get_apk_path():
 
 def get_welcome_kb():
     builder = InlineKeyboardBuilder()
-    # Row 1: Play Game (Most important)
-    builder.row(types.InlineKeyboardButton(
-        text="🎮 PLAY GAME 🎮", 
-        url="https://www.rajastake.com/#/register?invitationCode=671335540634"
-    ))
-    # Row 2: Tashan Official Link
+    # Row 1: Tashan Official Link
     builder.row(types.InlineKeyboardButton(
         text="TASHAN OFFICIAL LINK 🚀", 
         url="https://www.rajastake.com/#/register?invitationCode=671335540634"
+    ))
+    # Row 2: Loss Recovery Channel
+    builder.row(types.InlineKeyboardButton(
+        text="LOSS RECOVERY CHANNEL �", 
+        url="https://t.me/+ROCUgzQGHd8yODhl"
     ))
     # Row 3: Support Links
     builder.row(
