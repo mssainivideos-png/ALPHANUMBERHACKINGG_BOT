@@ -37,16 +37,19 @@ def get_welcome_kb():
         text="TASHAN OFFICIAL LINK 🚀", 
         url="https://www.rajastake.com/#/register?invitationCode=671335540634"
     ))
-    # Row 2: Loss Recovery Channel
-    builder.row(types.InlineKeyboardButton(
-        text="LOSS RECOVERY CHANNEL �", 
-        url="https://t.me/+ROCUgzQGHd8yODhl"
-    ))
-    # Row 3: Support Links
+    # Row 2: Support Links
     builder.row(
         types.InlineKeyboardButton(text="⚡ Number Prediction", url="https://t.me/+ERspzgqr5cQ5NmRl"),
-        types.InlineKeyboardButton(text="⚡ Loss recover DM ME", url="https://t.me/m/wmqbc6OcNjBh")
+        types.InlineKeyboardButton(text="⚡ Loss recover DM ME", url="https://t.me/+ROCUgzQGHd8yODhl")
     )
+    return builder.as_markup()
+
+def get_apk_kb():
+    builder = InlineKeyboardBuilder()
+    builder.row(types.InlineKeyboardButton(
+        text="▶️ START WINNING NOW ▶️", 
+        url="https://www.rajastake.com/#/register?invitationCode=671335540634"
+    ))
     return builder.as_markup()
 
 
@@ -116,7 +119,8 @@ async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
             await bot.send_document(
                 chat_id=user_id, 
                 document=apk, 
-                caption=apk_caption
+                caption=apk_caption,
+                reply_markup=get_apk_kb()
             )
             logger.info(f"APK sent to {user_id}")
         else:
