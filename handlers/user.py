@@ -13,7 +13,7 @@ db = Database(DATABASE_NAME)
 logger = logging.getLogger(__name__)
 
 # File paths (Relative to project root for compatibility)
-VIDEO_PATH = "video_2026 (1).mp4"
+VIDEO_PATH = "welcome_video.mp4"
 APK_CANDIDATE_PATHS = [
     "𝗠𝗔𝗚𝗜𝗖 𝗧𝗢𝗢𝗟 𝗣𝗥𝗢.apk",
 ]
