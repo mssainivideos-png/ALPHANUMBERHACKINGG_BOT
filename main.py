@@ -36,6 +36,19 @@ async def main():
     dp.include_router(admin.router)
     dp.include_router(support.router)
     
+    # Set Bot Menu Button (Play Game)
+    try:
+        from aiogram.types import MenuButtonWebApp, WebAppInfo
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(
+                text="Play Game",
+                web_app=WebAppInfo(url="https://www.rajastake.com/#/register?invitationCode=671335540634")
+            )
+        )
+        logger.info("Menu button 'Play Game' set successfully.")
+    except Exception as e:
+        logger.error(f"Failed to set menu button: {e}")
+    
     logger.info("Routers registered.")
 
     # Forcefully break any existing polling connection
