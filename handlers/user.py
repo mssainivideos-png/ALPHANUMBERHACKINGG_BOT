@@ -47,10 +47,7 @@ def get_welcome_kb():
 def get_apk_kb():
     builder = InlineKeyboardBuilder()
     # Row 1: Start Winning
-    builder.row(types.InlineKeyboardButton(
-        text="▶️ LOSS RECOVERY CHANNEL  ▶️", 
-        url="https://t.me/+ROCUgzQGHd8yODhl"
-    ))
+   
     # Row 2: Loss Recovery Channel (Sabse niche)
     builder.row(types.InlineKeyboardButton(
         text="LOSS RECOVERY CHANNEL 📉", 
