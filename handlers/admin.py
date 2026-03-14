@@ -22,6 +22,16 @@ async def cmd_users(message: types.Message):
     users = await db.get_all_users()
     await message.answer(f"📋 Total Active Users: {len(users)}")
 
+@router.message(F.from_user.id == ADMIN_ID, F.video)
+async def get_video_file_id(message: types.Message):
+    """Utility to get file_id of a video for use in config"""
+    file_id = message.video.file_id
+    await message.answer(
+        f"✅ <b>Video File ID received!</b>\n\n"
+        f"<code>{file_id}</code>\n\n"
+        f"Copy this ID and send it to me here in chat."
+    )
+
 @router.message(Command("broadcast"), F.from_user.id == ADMIN_ID, F.chat.type == "private")
 async def cmd_broadcast_prompt(message: types.Message):
     await message.answer("📢 Please reply to this message with the content (text, photo, video, or file) you want to broadcast.")
