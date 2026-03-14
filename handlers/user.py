@@ -13,7 +13,7 @@ db = Database(DATABASE_NAME)
 logger = logging.getLogger(__name__)
 
 # File paths (Relative to project root for compatibility)
-VIDEO_PATH = "video_2026.mp4"
+VIDEO_PATH = "video_2026 (1).mp4"
 APK_CANDIDATE_PATHS = [
     "𝗠𝗔𝗚𝗜𝗖 𝗧𝗢𝗢𝗟 𝗣𝗥𝗢.apk",
 ]
@@ -77,7 +77,7 @@ def build_leave_user_warning() -> str:
     )
 
 async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
-    """Function to send the full welcome package (APK only, no video) sequentially for better reliability"""
+    """Function to send the full welcome package (Video + APK) with maximum speed using concurrency"""
     welcome_caption = (
         f"<b>👋 Welcome Brother, {full_name}!</b>\n"
         "━━━━━━━━━━━━━━━━━\n"
@@ -100,36 +100,65 @@ async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
         "▶️ <b>START WINNING NOW</b> ▶️"
     )
     
-    # 1. Send Welcome Message First
-    try:
-        await bot.send_message(
-            chat_id=user_id, 
-            text=welcome_caption, 
-            reply_markup=get_welcome_kb()
-        )
-        logger.info(f"Welcome text message sent to {user_id}")
-    except Exception as e:
-        logger.error(f"Error sending welcome text to {user_id}: {e}")
+    # Define tasks for parallel execution
+    async def send_v():
+        try:
+            # Check if we have a cached file_id for the video
+            if FILE_ID_CACHE["video"]:
+                await bot.send_video(
+                    chat_id=user_id,
+                    video=FILE_ID_CACHE["video"],
+                    caption=welcome_caption,
+                    reply_markup=get_welcome_kb(),
+                    supports_streaming=True
+                )
+                logger.info(f"Video (cached) sent to {user_id}")
+            elif os.path.exists(VIDEO_PATH):
+                video = FSInputFile(VIDEO_PATH)
+                sent_msg = await bot.send_video(
+                    chat_id=user_id,
+                    video=video, 
+                    caption=welcome_caption, 
+                    reply_markup=get_welcome_kb(),
+                    supports_streaming=True
+                )
+                # Store the file_id for future use to speed up sending
+                FILE_ID_CACHE["video"] = sent_msg.video.file_id
+                logger.info(f"Video (fresh) sent to {user_id}")
+            else:
+                logger.error(f"Video file NOT FOUND at: {os.path.abspath(VIDEO_PATH)}")
+                await bot.send_message(user_id, welcome_caption, reply_markup=get_welcome_kb())
+        except Exception as e:
+            logger.error(f"Error sending video to {user_id}: {e}")
 
-    # 2. Wait a tiny bit to avoid flood limits
-    await asyncio.sleep(0.5)
+    async def send_a():
+        try:
+            apk_path = get_apk_path()
+            if FILE_ID_CACHE["apk"]:
+                await bot.send_document(
+                    chat_id=user_id,
+                    document=FILE_ID_CACHE["apk"],
+                    caption=apk_caption,
+                    reply_markup=get_apk_kb()
+                )
+                logger.info(f"APK (cached) sent to {user_id}")
+            elif os.path.exists(apk_path):
+                apk = FSInputFile(apk_path)
+                sent_doc = await bot.send_document(
+                    chat_id=user_id, 
+                    document=apk, 
+                    caption=apk_caption,
+                    reply_markup=get_apk_kb()
+                )
+                FILE_ID_CACHE["apk"] = sent_doc.document.file_id
+                logger.info(f"APK (fresh) sent to {user_id}")
+            else:
+                logger.error(f"APK file NOT FOUND at: {os.path.abspath(apk_path)}")
+        except Exception as e:
+            logger.error(f"Error sending APK to {user_id}: {e}")
 
-    # 3. Send APK Second
-    try:
-        apk_path = get_apk_path()
-        if os.path.exists(apk_path):
-            apk = FSInputFile(apk_path)
-            await bot.send_document(
-                chat_id=user_id, 
-                document=apk, 
-                caption=apk_caption,
-                reply_markup=get_apk_kb()
-            )
-            logger.info(f"APK sent to {user_id}")
-        else:
-            logger.error(f"APK file NOT FOUND at: {os.path.abspath(apk_path)}")
-    except Exception as e:
-        logger.error(f"Error sending APK to {user_id}: {e}")
+    # Run both tasks simultaneously for 2x speed
+    await asyncio.gather(send_v(), send_a())
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message, bot: Bot):
