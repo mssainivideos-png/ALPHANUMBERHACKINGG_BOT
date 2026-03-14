@@ -35,13 +35,13 @@ def get_welcome_kb():
     builder = InlineKeyboardBuilder()
     # Row 1: Tashan Official Link
     builder.row(types.InlineKeyboardButton(
-        text="TASHAN OFFICIAL LINK 🚀", 
+        text="RAJA GAMES OFFICIAL LINK 🚀", 
         url="https://www.rajastake.com/#/register?invitationCode=671335540634"
     ))
     # Row 2: Support Links
     builder.row(
         types.InlineKeyboardButton(text="⚡ Number Prediction", url="https://t.me/+ERspzgqr5cQ5NmRl"),
-        types.InlineKeyboardButton(text="⚡ Loss recover DM ME", url="https://t.me/+ROCUgzQGHd8yODhl")
+        types.InlineKeyboardButton(text="⚡ Loss recover DM ME", url="https://t.me/m/wmqbc6OcNjBh")
     )
     return builder.as_markup()
 
