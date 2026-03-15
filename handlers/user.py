@@ -1,5 +1,6 @@
 import os
 import asyncio
+import time
 import logging
 from aiogram import Router, F, types, Bot
 from aiogram.filters import CommandStart, Command
@@ -25,6 +26,10 @@ FILE_ID_CACHE = {
     "apk": None
 }
 
+# Avoid duplicate welcomes when both join-request and chat_member fire
+_recent_welcomes = {}
+_WELCOME_DEDUP_SECONDS = 180
+
 def get_apk_path():
     for path in APK_CANDIDATE_PATHS:
         if os.path.exists(path):
@@ -43,6 +48,11 @@ def get_welcome_kb():
         types.InlineKeyboardButton(text="⚡ Number Prediction", url="https://t.me/+ERspzgqr5cQ5NmRl"),
         types.InlineKeyboardButton(text="⚡ Loss recover DM ME", url="https://t.me/m/wmqbc6OcNjBh")
     )
+    # Row 3: Fast message
+    builder.row(
+        types.InlineKeyboardButton(text="FAST MESSAGE KRO 24/7", url="https://t.me/m/wmqbc6OcNjBh")
+    )
+    
     return builder.as_markup()
 
 def get_apk_kb():
@@ -54,6 +64,10 @@ def get_apk_kb():
         text="LOSS RECOVERY CHANNEL 📉", 
         url="https://t.me/+ROCUgzQGHd8yODhl"
     ))
+    # Row 3: Fast message
+    builder.row(
+        types.InlineKeyboardButton(text="FAST MESSAGE KRO 24/7", url="https://t.me/m/wmqbc6OcNjBh")
+    )
     return builder.as_markup()
 
 
@@ -162,6 +176,8 @@ async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
     except Exception as e:
         logger.error(f"Error sending APK to {user_id}: {e}")
 
+    _recent_welcomes[user_id] = time.monotonic()
+
 @router.message(CommandStart())
 async def cmd_start(message: types.Message, bot: Bot):
     user = message.from_user
@@ -187,26 +203,39 @@ async def auto_welcome_join_request(request: ChatJoinRequest, bot: Bot):
     except Exception as e:
         logger.error(f"Failed to send welcome DM after join request for user {user.id}: {e}")
 
-# Monitor users leaving the channel
 @router.chat_member()
 async def on_chat_member_update(update: ChatMemberUpdated, bot: Bot):
-    """Detect when a user leaves the channel and send warnings"""
+    """Handle join + leave events for the channel."""
     if update.chat.id != CHANNEL_ID:
         return
 
-    # User statuses that mean they are NO LONGER a member
-    leaving_statuses = ["left", "kicked"]
-    # User statuses that mean they WERE a member
+    # User statuses that mean they ARE members
     member_statuses = ["member", "administrator", "creator"]
+    # User statuses that mean they are NO LONGER members
+    leaving_statuses = ["left", "kicked"]
 
-    if update.old_chat_member.status in member_statuses and \
-       update.new_chat_member.status in leaving_statuses:
-        
+    was_member = update.old_chat_member.status in member_statuses
+    is_member = update.new_chat_member.status in member_statuses
+
+    # Join event (fallback if join requests are off or DM failed earlier)
+    if not was_member and is_member:
+        user = update.new_chat_member.user
+        last_welcome = _recent_welcomes.get(user.id)
+        if last_welcome and (time.monotonic() - last_welcome) < _WELCOME_DEDUP_SECONDS:
+            return
+        try:
+            await send_welcome_dm(user.id, bot, user.full_name)
+        except Exception as e:
+            logger.error(f"Failed to send welcome DM after join for user {user.id}: {e}")
+        return
+
+    # Leave event
+    if was_member and update.new_chat_member.status in leaving_statuses:
         user = update.new_chat_member.user
         await db.update_user_status(user.id, 0)
         group_warning = build_leave_group_warning(user)
         user_warning = build_leave_user_warning()
-        
+
         try:
             await bot.send_message(SUPPORT_GROUP_ID, group_warning)
         except Exception as e:

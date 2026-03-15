@@ -18,8 +18,12 @@ WELCOME_VIDEO_FILE_ID = os.getenv("WELCOME_VIDEO_FILE_ID", "").strip() or None
 # Support Group ID
 SUPPORT_GROUP_ID = int(os.getenv("SUPPORT_GROUP_ID", "-1003557182463")) # Updated from .env or default
 
-# Channel ID to monitor (FUTURE MILLIONAIRE)
-CHANNEL_ID = -1003538093819 # Fixed channel ID from user
+# Channel ID to monitor (from env or default)
+channel_id_str = os.getenv("CHANNEL_ID", "-1003538093819")
+try:
+    CHANNEL_ID = int(channel_id_str)
+except ValueError:
+    CHANNEL_ID = -1003538093819
 
 # Admin IDs list for flexibility
 ADMINS = [ADMIN_ID]

@@ -21,7 +21,8 @@ ALLOWED_SUPPORT_REPLY_STATUSES = {"administrator", "creator"}
 
 def build_support_header(user: types.User) -> str:
     mention = f'<a href="tg://user?id={user.id}">{user.full_name}</a>'
-    return f"👤 <b>From:</b> {mention}"
+    # Include a plain-text ID marker so replies can always resolve the user.
+    return f"👤 <b>From:</b> {mention}\n{SUPPORT_USER_ID_MARKER}: {user.id}"
 
 
 async def delete_message_after_delay(message: Message, delay_seconds: int = 3):
@@ -164,21 +165,27 @@ async def user_to_group(message: Message, bot: Bot):
 async def group_reply_to_user(message: Message, bot: Bot):
     """Admin/Support replies in the support group"""
     
-    # 1. Reply to a forwarded message from a user
-    if message.reply_to_message and message.reply_to_message.forward_from:
+    if not message.reply_to_message:
+        return
+
+    target_user_id = None
+
+    # 1) If this is a reply to a forwarded user message
+    if message.reply_to_message.forward_from:
         target_user_id = message.reply_to_message.forward_from.id
-    
-    # 2. Reply to a message sent by the bot (which might contain hidden ID or be mapped)
-    elif message.reply_to_message and message.reply_to_message.from_user.id == bot.id:
+
+    # 2) Try resolving from stored map or embedded ID markers
+    if not target_user_id:
         target_user_id = await resolve_support_user_id(message)
-        
-        # Fallback to pattern matching if resolve fails
-        if not target_user_id:
-            match = re.search(r"User ID: (\d+)", message.reply_to_message.text or "")
-            if match:
-                 target_user_id = int(match.group(1))
-    else:
-        # If not a reply, ignore
+
+    # 3) Last-resort: parse an explicit "User ID" marker from the replied message
+    if not target_user_id:
+        match = re.search(r"User ID: (\d+)", (message.reply_to_message.text or ""))
+        if match:
+            target_user_id = int(match.group(1))
+
+    # If still unresolved, silently ignore to avoid noisy errors in the group
+    if not target_user_id:
         return
 
     if target_user_id:
@@ -216,4 +223,4 @@ async def group_reply_to_user(message: Message, bot: Bot):
             logger.error(f"Error sending reply to user {target_user_id}: {e}")
             await message.reply(f"❌ <b>Failed to send reply:</b> {e}")
     else:
-        await message.reply("❌ <b>Could not identify the user for this reply.</b> Please reply to a forwarded message or a valid support ticket.")
+        return
