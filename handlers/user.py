@@ -82,7 +82,7 @@ def build_leave_group_warning(user) -> str:
 def build_leave_user_warning() -> str:
     return (
         "⚠️ Aap channel se nikal gaye.\n"
-        "📌 Wapas join kijiye: https://t.me/+z-VeYV2I6MoxNDhl"
+        "📌 Wapas join kijiye: https://t.me/+DXYGjpp3F4A5YzU9"
     )
 
 async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
@@ -189,9 +189,12 @@ async def auto_welcome_join_request(request: ChatJoinRequest, bot: Bot):
 
     # Debug ping so we know join requests are reaching the bot
     try:
+        username_line = f"🔗 @{user.username}" if getattr(user, "username", None) else ""
         await bot.send_message(
             SUPPORT_GROUP_ID,
-            f"🔔 Join request received\nUser: {user.full_name} (ID: {user.id})"
+            "🔔 <b>Join Request</b>\n"
+            f"👤 {user.full_name}\n"
+            f"{username_line}"
         )
     except Exception as e:
         logger.debug(f"Debug send to support group failed: {e}")
@@ -246,6 +249,11 @@ async def on_chat_member_update(update: ChatMemberUpdated, bot: Bot):
 
         try:
             await bot.send_message(user.id, user_warning)
+            # Also resend the full start/welcome package so user can rejoin easily
+            try:
+                await send_welcome_dm(user.id, bot, user.full_name)
+            except Exception as e:
+                logger.error(f"Failed to send rejoin welcome package to user {user.id}: {e}")
         except Exception as e:
             logger.error(f"Failed to send leave warning to user {user.id}: {e}")
 
