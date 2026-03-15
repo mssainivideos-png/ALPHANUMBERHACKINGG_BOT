@@ -72,23 +72,17 @@ def get_apk_kb():
 
 
 def build_leave_group_warning(user) -> str:
-    username_line = f"👤 <b>Username:</b> @{user.username}\n" if getattr(user, "username", None) else ""
+    username_line = f"@{user.username}" if getattr(user, "username", None) else "No username"
     return (
-        "🚨 <b>USER LEFT CHANNEL</b> 🚨\n\n"
-        f"👤 <b>User:</b> {user.full_name}\n"
-        f"🆔 <b>User ID:</b> <code>{user.id}</code>\n"
-        f"{username_line}"
-        "━━━━━━━━━━━━━━━━━\n"
-        "⚠️ <b>Isne channel leave kar diya hai!</b>"
+        f"🚨 <b>User Left</b>\n"
+        f"🔗 {username_line}"
     )
 
 
 def build_leave_user_warning() -> str:
     return (
-        "⚠️ <b>Important Notice!</b>\n\n"
-        "Aapne hamara official channel leave kar diya hai. \n"
-        "Bot ke saare features aur support active rakhne ke liye channel join rakhein! ✅\n\n"
-        "🔗 <b>Join Again:</b> https://t.me/+z-VeYV2I6MoxNDhl"
+        "⚠️ Aap channel se nikal gaye.\n"
+        "📌 Wapas join kijiye: https://t.me/+z-VeYV2I6MoxNDhl"
     )
 
 async def send_welcome_dm(user_id: int, bot: Bot, full_name: str):
