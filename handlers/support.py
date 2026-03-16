@@ -196,6 +196,22 @@ async def group_reply_to_user(message: Message, bot: Bot):
 
     target_user_id = None
 
+    # Ignore service/system messages that have no deliverable payload
+    has_payload = any(
+        [
+            message.text,
+            getattr(message, "photo", None),
+            getattr(message, "video", None),
+            getattr(message, "document", None),
+            getattr(message, "voice", None),
+            getattr(message, "audio", None),
+            getattr(message, "animation", None),
+            getattr(message, "sticker", None),
+        ]
+    )
+    if not has_payload:
+        return
+
     # 0) If topic is mapped to a user (forum mode)
     thread_id = getattr(message, "message_thread_id", None)
     if thread_id:
@@ -240,8 +256,17 @@ async def group_reply_to_user(message: Message, bot: Bot):
             elif message.voice:
                 await bot.send_voice(target_user_id, message.voice.file_id, caption=f"{reply_header}{message.caption or ''}")
                 sent_to_user = True
+            elif message.audio:
+                await bot.send_audio(target_user_id, message.audio.file_id, caption=f"{reply_header}{message.caption or ''}")
+                sent_to_user = True
+            elif message.animation:
+                await bot.send_animation(target_user_id, message.animation.file_id, caption=f"{reply_header}{message.caption or ''}")
+                sent_to_user = True
+            elif message.sticker:
+                await bot.send_sticker(target_user_id, message.sticker.file_id)
+                sent_to_user = True
             else:
-                await message.reply("❌ <b>This reply type is not supported.</b>")
+                # Unsupported types: silently ignore to avoid noisy errors in topics
                 return
 
             if sent_to_user:
