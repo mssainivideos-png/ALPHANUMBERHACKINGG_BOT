@@ -18,6 +18,23 @@ USER_ID_PATTERN = re.compile(
 )
 ALLOWED_SUPPORT_REPLY_STATUSES = {"administrator", "creator"}
 
+async def ensure_user_topic(bot: Bot, user: types.User):
+    # Return existing topic id if present
+    existing = await db.get_user_topic(user.id)
+    if existing:
+        return existing
+
+    title = f"{(user.full_name or 'User')[:60]} | {user.id}"
+    try:
+        topic = await bot.create_forum_topic(chat_id=SUPPORT_GROUP_ID, name=title)
+        thread_id = getattr(topic, "message_thread_id", None)
+        if thread_id:
+            await db.set_user_topic(user.id, thread_id)
+            return thread_id
+    except Exception as e:
+        logger.error(f"Failed to create forum topic for user {user.id}: {e}")
+    return None
+
 
 def build_support_header(user: types.User) -> str:
     mention = f'<a href="tg://user?id={user.id}">{user.full_name}</a>'
@@ -120,35 +137,42 @@ async def user_to_group(message: Message, bot: Bot):
     user = message.from_user
 
     header = build_support_header(user)
+    thread_id = await ensure_user_topic(bot, user)
     
     try:
         sent_message = None
 
         if message.text:
-            sent_message = await bot.send_message(SUPPORT_GROUP_ID, f"{header}\n{message.text}")
+            sent_message = await bot.send_message(
+                SUPPORT_GROUP_ID, f"{header}\n{message.text}", message_thread_id=thread_id
+            )
         elif message.photo:
             sent_message = await bot.send_photo(
                 SUPPORT_GROUP_ID,
                 message.photo[-1].file_id,
-                caption=f"{header}\n{message.caption or ''}"
+                caption=f"{header}\n{message.caption or ''}",
+                message_thread_id=thread_id
             )
         elif message.video:
             sent_message = await bot.send_video(
                 SUPPORT_GROUP_ID,
                 message.video.file_id,
-                caption=f"{header}\n{message.caption or ''}"
+                caption=f"{header}\n{message.caption or ''}",
+                message_thread_id=thread_id
             )
         elif message.document:
             sent_message = await bot.send_document(
                 SUPPORT_GROUP_ID,
                 message.document.file_id,
-                caption=f"{header}\n{message.caption or ''}"
+                caption=f"{header}\n{message.caption or ''}",
+                message_thread_id=thread_id
             )
         elif message.voice:
             sent_message = await bot.send_voice(
                 SUPPORT_GROUP_ID,
                 message.voice.file_id,
-                caption=f"{header}\n{message.caption or ''}"
+                caption=f"{header}\n{message.caption or ''}",
+                message_thread_id=thread_id
             )
         else:
             await message.answer("❌ <b>This message type is not supported for support forwarding.</b>")
@@ -166,20 +190,27 @@ async def group_reply_to_user(message: Message, bot: Bot):
     """Admin/Support replies in the support group"""
     
     if not message.reply_to_message:
-        return
+        # In forums, message_thread_id is enough
+        if not getattr(message, "message_thread_id", None):
+            return
 
     target_user_id = None
 
+    # 0) If topic is mapped to a user (forum mode)
+    thread_id = getattr(message, "message_thread_id", None)
+    if thread_id:
+        target_user_id = await db.get_user_by_topic(thread_id)
+
     # 1) If this is a reply to a forwarded user message
-    if message.reply_to_message.forward_from:
+    if not target_user_id and message.reply_to_message and message.reply_to_message.forward_from:
         target_user_id = message.reply_to_message.forward_from.id
 
     # 2) Try resolving from stored map or embedded ID markers
-    if not target_user_id:
+    if not target_user_id and message.reply_to_message:
         target_user_id = await resolve_support_user_id(message)
 
     # 3) Last-resort: parse an explicit "User ID" marker from the replied message
-    if not target_user_id:
+    if not target_user_id and message.reply_to_message:
         match = re.search(r"User ID: (\d+)", (message.reply_to_message.text or ""))
         if match:
             target_user_id = int(match.group(1))

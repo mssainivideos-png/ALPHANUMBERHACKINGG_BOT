@@ -43,6 +43,13 @@ class Database:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS user_topics (
+                    user_id INTEGER PRIMARY KEY,
+                    thread_id INTEGER NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
             await db.commit()
 
     async def add_user(self, user_id, username, full_name):
@@ -100,6 +107,32 @@ class Database:
             async with db.execute(
                 "SELECT user_id FROM support_message_map WHERE group_message_id = ?",
                 (group_message_id,)
+            ) as cursor:
+                row = await cursor.fetchone()
+                return row[0] if row else None
+
+    async def set_user_topic(self, user_id, thread_id):
+        async with aiosqlite.connect(self.db_name) as db:
+            await db.execute(
+                "INSERT OR REPLACE INTO user_topics (user_id, thread_id) VALUES (?, ?)",
+                (user_id, thread_id)
+            )
+            await db.commit()
+
+    async def get_user_topic(self, user_id):
+        async with aiosqlite.connect(self.db_name) as db:
+            async with db.execute(
+                "SELECT thread_id FROM user_topics WHERE user_id = ?",
+                (user_id,)
+            ) as cursor:
+                row = await cursor.fetchone()
+                return row[0] if row else None
+
+    async def get_user_by_topic(self, thread_id):
+        async with aiosqlite.connect(self.db_name) as db:
+            async with db.execute(
+                "SELECT user_id FROM user_topics WHERE thread_id = ?",
+                (thread_id,)
             ) as cursor:
                 row = await cursor.fetchone()
                 return row[0] if row else None
