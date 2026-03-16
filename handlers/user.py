@@ -187,23 +187,7 @@ async def auto_welcome_join_request(request: ChatJoinRequest, bot: Bot):
     user = request.from_user
     await db.add_user(user.id, user.username, user.full_name)
 
-    # Debug ping so we know join requests are reaching the bot
-    try:
-        username_line = f"🔗 @{user.username}" if getattr(user, "username", None) else ""
-        await bot.send_message(
-            SUPPORT_GROUP_ID,
-            "🔔 <b>Join Request</b>\n"
-            f"👤 {user.full_name}\n"
-            f"{username_line}"
-        )
-    except Exception as e:
-        logger.debug(f"Debug send to support group failed: {e}")
-
-    try:
-        await bot.approve_chat_join_request(chat_id=request.chat.id, user_id=user.id)
-    except Exception as e:
-        logger.error(f"Failed to approve join request for user {user.id}: {e}")
-
+    # Only send the welcome package; do NOT auto-approve or ping support.
     try:
         await send_welcome_dm(user.id, bot, user.full_name)
     except Exception as e:
