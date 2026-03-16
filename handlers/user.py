@@ -8,6 +8,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import FSInputFile, ChatJoinRequest, ChatMemberUpdated
 from database import Database
 from config import DATABASE_NAME, CHANNEL_ID, SUPPORT_GROUP_ID, WELCOME_VIDEO_FILE_ID
+from handlers.support import ensure_user_topic
 
 router = Router()
 db = Database(DATABASE_NAME)
@@ -187,6 +188,12 @@ async def auto_welcome_join_request(request: ChatJoinRequest, bot: Bot):
     user = request.from_user
     await db.add_user(user.id, user.username, user.full_name)
 
+    # Pre-create per-user support topic so staff see the user immediately
+    try:
+        await ensure_user_topic(bot, user)
+    except Exception as e:
+        logger.debug(f"Failed to pre-create topic on join request for user {user.id}: {e}")
+
     # Only send the welcome package; do NOT auto-approve or ping support.
     try:
         await send_welcome_dm(user.id, bot, user.full_name)
@@ -217,6 +224,11 @@ async def on_chat_member_update(update: ChatMemberUpdated, bot: Bot):
             await send_welcome_dm(user.id, bot, user.full_name)
         except Exception as e:
             logger.error(f"Failed to send welcome DM after join for user {user.id}: {e}")
+        # Pre-create per-user support topic so staff can see the user without waiting for DM
+        try:
+            await ensure_user_topic(bot, user)
+        except Exception as e:
+            logger.debug(f"Failed to pre-create topic on chat_member join for user {user.id}: {e}")
         return
 
     # Leave event
