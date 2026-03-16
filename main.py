@@ -51,12 +51,12 @@ async def main():
     
     logger.info("Routers registered.")
 
-    # Forcefully break any existing polling connection
-    logger.info("Breaking existing polling connections...")
-    await bot.set_webhook(url="https://google.com") # Dummy webhook
-    await asyncio.sleep(2)
-    await bot.delete_webhook(drop_pending_updates=True)
-    logger.info("Polling connections broken. Starting clean session...")
+    # Clean webhook without dropping pending updates (avoids dismissing join requests)
+    try:
+        await bot.delete_webhook(drop_pending_updates=False)
+        logger.info("Webhook cleared without dropping pending updates.")
+    except Exception as e:
+        logger.warning(f"Could not clear webhook cleanly: {e}")
     
     try:
         # We explicitly tell dispatcher to resolve all used update types (including chat_member)
