@@ -137,41 +137,42 @@ async def user_to_group(message: Message, bot: Bot):
 
     header = build_support_header(user)
     thread_id = await ensure_user_topic(bot, user)
+    send_kwargs = {"message_thread_id": thread_id} if thread_id else {}
     
     try:
         sent_message = None
 
         if message.text:
             sent_message = await bot.send_message(
-                SUPPORT_GROUP_ID, f"{header}\n{message.text}", message_thread_id=thread_id
+                SUPPORT_GROUP_ID, f"{header}\n{message.text}", **send_kwargs
             )
         elif message.photo:
             sent_message = await bot.send_photo(
                 SUPPORT_GROUP_ID,
                 message.photo[-1].file_id,
                 caption=f"{header}\n{message.caption or ''}",
-                message_thread_id=thread_id
+                **send_kwargs
             )
         elif message.video:
             sent_message = await bot.send_video(
                 SUPPORT_GROUP_ID,
                 message.video.file_id,
                 caption=f"{header}\n{message.caption or ''}",
-                message_thread_id=thread_id
+                **send_kwargs
             )
         elif message.document:
             sent_message = await bot.send_document(
                 SUPPORT_GROUP_ID,
                 message.document.file_id,
                 caption=f"{header}\n{message.caption or ''}",
-                message_thread_id=thread_id
+                **send_kwargs
             )
         elif message.voice:
             sent_message = await bot.send_voice(
                 SUPPORT_GROUP_ID,
                 message.voice.file_id,
                 caption=f"{header}\n{message.caption or ''}",
-                message_thread_id=thread_id
+                **send_kwargs
             )
         else:
             await message.answer("❌ <b>This message type is not supported for support forwarding.</b>")
