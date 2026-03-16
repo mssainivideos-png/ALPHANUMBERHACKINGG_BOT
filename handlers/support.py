@@ -38,8 +38,7 @@ async def ensure_user_topic(bot: Bot, user: types.User):
 
 def build_support_header(user: types.User) -> str:
     mention = f'<a href="tg://user?id={user.id}">{user.full_name}</a>'
-    # Include a plain-text ID marker so replies can always resolve the user.
-    return f"👤 <b>From:</b> {mention}\n{SUPPORT_USER_ID_MARKER}: {user.id}"
+    return f"👤 <b>From:</b> {mention}"
 
 
 async def delete_message_after_delay(message: Message, delay_seconds: int = 3):
